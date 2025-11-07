@@ -22,6 +22,7 @@ import {
   writeFile600Perm,
 } from "../../util/index.js";
 import {getVersionData} from "../../util/version.js";
+import {autoImportEraFiles} from "../era/utils.js";
 import {initBeaconState} from "./initBeaconState.js";
 import {initPrivateKeyAndEnr} from "./initPeerIdAndEnr.js";
 import {BeaconArgs} from "./options.js";
@@ -67,6 +68,14 @@ export async function beaconHandler(args: BeaconArgs & GlobalArgs): Promise<void
 
   const db = new BeaconDb(config, await LevelDbController.create(options.db, {metrics: null, logger}));
   logger.info("Connected to LevelDB database", {path: options.db.name});
+
+  // Auto-import ERA files if configured
+  if (options.era.autoImportOnStartup && options.era.autoImportDir) {
+    await autoImportEraFiles(db, config, options.era.autoImportDir, logger, {
+      deleteAfterImport: options.era.deleteAfterImport,
+      skipExisting: options.era.skipExisting,
+    });
+  }
 
   // BeaconNode setup
   try {
